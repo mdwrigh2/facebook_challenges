@@ -1,0 +1,26 @@
+#!/usr/bin/ruby 
+def hop n
+  str = ""
+  (1..n).each do |num|
+    if num % 3 == 0 and num % 5 == 0
+      str += "Hop\n"
+    end
+    if num % 5 == 0 and num % 3 != 0
+      str += "Hophop\n"
+    end
+    if num % 3 == 0 and num % 5 != 0
+      str += "Hoppity\n"
+    end
+  end
+  return str
+end
+
+if ARGV.size == 1
+
+  file = File.open(ARGV[0])
+  file.each do |line|
+    if line.to_i > 0
+      print hop line.to_i
+    end
+  end
+end
