@@ -1,4 +1,4 @@
-#!/usr/bin/ruby 
+#!/usr/bin/env ruby
 def hop n
   str = ""
   (1..n).each do |num|
