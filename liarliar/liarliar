@@ -1,76 +1,91 @@
 #!/usr/bin/env ruby
 
+gs = []
+class Array
+  def includes_any? g
+    g.each do |item|
+      return true if self.include? item
+    end
+    return false
+  end
+end
 
-groups = {}
+class Groups
+  attr_accessor :g1, :g2
+
+  def initialize g1, g2
+    @g1 = g1
+    @g2 = g2
+  end
+
+  def mergeable? g
+    # if we have one element in common, we can merge the groups
+    return true if @g1.includes_any? g.g1 or @g2.includes_any? g.g1
+    return true if @g1.includes_any? g.g2 or @g2.includes_any? g.g2
+    return false
+  end
+
+  def merge g
+    temp1 = []
+    temp2 = []
+    # If self.g1 includes any members from g.g1, the members in those two groups belong to the same group
+    # the same can be applied to g2
+    if @g1.includes_any? g.g1 or @g2.includes_any? g.g2
+      temp1 = (@g1+g.g1).uniq
+      temp2 = (@g2+g.g2).uniq
+      return Groups.new(temp1, temp2)
+    end
+
+    # if self.g1 includes any members from g.g2, then the members in those two groups belong to the same group, and the same can be said for self.g2 and g.g1
+    # the same can be applied vice versa
+
+    if @g1.includes_any? g.g2 or @g2.includes_any? g.g1
+      temp1 = (@g1+g.g2).uniq
+      temp2 = (@g2+g.g1).uniq
+      return Groups.new(temp1, temp2)
+    end
+
+    # if none of this works, they aren't mergeable
+    return nil
+  end
+
+  def to_s
+    sizes = [@g1.size, @g2.size].sort.reverse
+    return "#{sizes[0]} #{sizes[1]}\n"
+  end
+
+end
 
 f = File.open(ARGV[0])
-
 people = f.readline.to_i
-
-# Grab the first entry
-
-line = f.readline.split(" ")
-g1 = [line[0]]
-g2 = []
-(1..line[1].to_i).each do
-  g2 << f.readline.strip
+while people == 0
+  people = f.readline.to_i
 end
 
-(1..people-1).each do |i|
-  line = f.readline.split(" ")
+
+(1..people).each do |i|
+  temp1 = []
+  temp2 = []
+  line = f.readline.split(/\s/).delete_if { |x| x == "" }
+  temp1 << line[0]
   (1..line[1].to_i).each do
-    groups[line[0]] = [] unless groups[line[0]]
-    groups[line[0]] << f.readline.strip
+    temp2 << f.readline.strip
+  end
+  gs << Groups.new(temp1, temp2)
+end
+
+final = gs.shift
+deletion = []
+while !gs.empty?
+  gs.each do |g|
+    if final.mergeable? g
+      deletion << g
+      final = final.merge g
+    end
+  end
+  deletion.each do |g|
+    gs.delete g
   end
 end
 
-while !groups.empty?
-  deletion = []
-  groups.each_pair do |k,v|
-    # check if group 1 includes the key
-    if g1.include? k
-      v.each do |p|
-        g2 << p unless g2.include? p
-      end
-      deletion << k
-      break
-    end
-    # check if group 2 includes the key
-    if g2.include? k
-      v.each do |p|
-        g1 << p unless g1.include? p
-      end
-      deletion << k
-      break
-    end
-
-    # check if any of the values are in g1 or g2
-    v.each do |name|
-      if g1.include? name
-        g2 << k unless g2.include? k
-        v.each do |p|
-          g1 << p unless g1.include? p
-        end
-        deletion << k
-        break
-      end
-
-      if g2.include? name
-        g1 << k unless g1.include? k
-        v.each do |p|
-          g2 << p unless g2.include? p
-        end
-        deletion << k
-        break
-      end
-    end
-  end
-
-  # Delete all keys we've sorted
-  deletion.each do |k|
-    groups.delete(k)
-  end
-end
-
-sizes = [g1.size, g2.size].sort.reverse
-print "#{sizes[0]} #{sizes[1]}\n"
+print final

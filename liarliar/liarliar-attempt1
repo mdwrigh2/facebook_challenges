@@ -1,0 +1,76 @@
+#!/usr/bin/env ruby
+
+
+groups = {}
+
+f = File.open(ARGV[0])
+
+people = f.readline.to_i
+
+# Grab the first entry
+
+line = f.readline.split(" ")
+g1 = [line[0]]
+g2 = []
+(1..line[1].to_i).each do
+  g2 << f.readline.strip
+end
+
+(1..people-1).each do |i|
+  line = f.readline.split(" ")
+  (1..line[1].to_i).each do
+    groups[line[0]] = [] unless groups[line[0]]
+    groups[line[0]] << f.readline.strip
+  end
+end
+
+while !groups.empty?
+  deletion = []
+  groups.each_pair do |k,v|
+    # check if group 1 includes the key
+    if g1.include? k
+      v.each do |p|
+        g2 << p unless g2.include? p
+      end
+      deletion << k
+      break
+    end
+    # check if group 2 includes the key
+    if g2.include? k
+      v.each do |p|
+        g1 << p unless g1.include? p
+      end
+      deletion << k
+      break
+    end
+
+    # check if any of the values are in g1 or g2
+    v.each do |name|
+      if g1.include? name
+        g2 << k unless g2.include? k
+        v.each do |p|
+          g1 << p unless g1.include? p
+        end
+        deletion << k
+        break
+      end
+
+      if g2.include? name
+        g1 << k unless g1.include? k
+        v.each do |p|
+          g2 << p unless g2.include? p
+        end
+        deletion << k
+        break
+      end
+    end
+  end
+
+  # Delete all keys we've sorted
+  deletion.each do |k|
+    groups.delete(k)
+  end
+end
+
+sizes = [g1.size, g2.size].sort.reverse
+print "#{sizes[0]} #{sizes[1]}\n"
